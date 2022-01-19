@@ -6,14 +6,14 @@
   <title>GPX2KML</title>
   <style>
 	body { width: 90%; max-width: 900px; min-width: 480px; margin: 0 auto; }
-	#selfile { border: 2px dashed #bbb; padding: 35px; }
   </style>
 </head>
 <body>
-	[GPX→KML変換 V1.1]
-	<b>破線のエリアに変換するGPXファイルをドロップするか、ボタンを押して選択してください。</b>
-	<input type="file" multiple id="selfile"><br>
-
+	[GPX→KML変換 V2.0]
+	<br>
+	<b>画面にGPXファイルをドロップするか、ファイル選択ボタンを押して選択してください。</b>
+	<input type="file" multiple id="selfile">
+	<br>
 	<form name="entFil">
 		<div>
 			<label for="read_txt">入力ファイル（ＧＰＸ）</label> <br>
@@ -29,20 +29,25 @@
 	</form>
 
 	<form name="selbttn1">
-		🞛ラインの色:
-		<input type="radio" name="color1" value="ff0000ff" checked> <span style="color:#ff0000">赤</span>
-		<input type="radio" name="color1" value="ffff0000" > <span style="color:#0000ff"><b>青</b></span>
-		<input type="radio" name="color1" value="ffd355ba" > <span style="color:#ba55d3"><b>紫</b></span>
-		<input type="radio" name="color1" value="ff000000" > <span style="color:#000000"><b>黒</b></span>
-		　　　🞛ラインの太さ:<input type="number" id="WoL" size="4"  min="0" max="10" value="3" style="width:3em;">
+		<b style="color:#ff3d3d">🞛</b>ラインの色:
+		<input type="radio" name="color1" value="ff0000ff" onchange="mke_KLM()" checked> <span style="color:#ff0000"><b>赤</b></span>
+		<input type="radio" name="color1" value="ffff0000" onchange="mke_KLM()" > <span style="color:#0000ff"><b>青</b></span>
+		<input type="radio" name="color1" value="ffd355ba" onchange="mke_KLM()" > <span style="color:#ba55d3"><b>紫</b></span>
+		<input type="radio" name="color1" value="ff000000" onchange="mke_KLM()" > <span style="color:#000000"><b>黒</b></span>
+		　　　<b style="color:#ff3d3d">🞛</b>ラインの太さ:<input type="number" id="WoL" size="4"  min="0" max="10" value="3" style="width:3em;">
+	</form>
+	<form name="selbttn2">
+		<b style="color:#ff3d3d">🞛</b>トラック端マーカー：
+		<input type="radio" name="Icon" value="all" onchange="mke_KLM()"> 全て表示する
+		<input type="radio" name="Icon" value="se" onchange="mke_KLM()" checked> 始点と終点のみ表示
+		<input type="radio" name="Icon" value="no" onchange="mke_KLM()" > 表示しない
+	</form>
+	<form name="selbttn3">
+		<b style="color:#ff3d3d">🞛</b>ウエイポイント(地名)マーカー：
+		<input type="radio" name="Icon2" value="on" onchange="mke_KLM()" checked > 表示する
+		<input type="radio" name="Icon2" value="off" onchange="mke_KLM()" > 表示しない
 	</form>
 
-	<form name="selbttn2">
-		🞛トラック端マーカー：
-		<input type="radio" name="Icon" value="all"> 全て表示する
-		<input type="radio" name="Icon" value="se" checked> 始点と終点のみ表示
-		<input type="radio" name="Icon" value="no" >  表示しない
-	</form>
 	<br>
 	<a id="getLocal" href="#" onClick="saveFile()">
 	<span style="border: 1px solid #000000; background-color: #dcdcdc">変換したKMLファイルを保存</span></a>
@@ -54,42 +59,76 @@ var obj1 = document.getElementById("selfile");
 var readTxt = ""; // 入力ファイルの文字列
 var writeFilNam = ""; // 拡張子無しファイル名
 var writeTex = ""; // 出力ファイル用文字列
-var pointer = 0;
+var pointer = 0; // 検索用ポインタ
 var trkpArr = [0, ""]; // trkptArr = [pointer, "lon,lat,ele"]
-var flgErr1 = 1;
+var flgErr1 = 1; // エラーフラグ
+var WpList = []; // ウエイポイント(地名)配列 [ [ name, lat, lon ], ... ]
+
 
 //ファイル読み込み（ダイアログでファイルが選択かドロップされた時）
+const dropArea = document.body; // ドラッグ&ドロップを許可する領域
+dropArea.addEventListener("dragover", event => {
+	event.preventDefault();
+	event.dataTransfer.dropEffect = "copy";
+});
+dropArea.addEventListener("drop", event => {
+   event.preventDefault();
+   var files = event.dataTransfer.files;
+   getFiles(files);
+});
+function getFiles(files){
+	for (let file of files){
+		var reader = new FileReader();
+		reader.readAsText(file); 
+		reader.onload = event => {
+			readTxt = event.target.result;
+			writeFilNam = file.name.split(".")[0];
+			after_file_read(readTxt, writeFilNam);
+		}
+	}
+}
+// ファイル選択ボタン入力
+var obj1 = document.getElementById("selfile");
 obj1.addEventListener("change",function(evt){
 	var file = evt.target.files;
- // ファイルの情報を取得
+  // ファイルの情報を取得
 	var input = document.querySelector("#selfile").files[0];
 	var reader = new FileReader();  // FileReaderの作成
 	reader.readAsText(file[0]);  // テキスト形式で読み込む
   // 読込終了後
 	reader.onload = function(){
-		readTxt = reader.result; // 読み込んだテキストを変数readTxtに入れる
-		document.entFil.read_txt.value = readTxt;  //テキストエリアに表示
-		pointer = readTxt.indexOf("<gpx");
-		if (pointer !== -1 ){
-			writeFilNam = input.name.split( "." )[0];
-			mke_KLM();
-			flgErr1 = 0;
-		}else{
-			alert("ファイル1はGPXファイルではありません");
-			flgErr1 = 1;
-		}	
+		readTxt = reader.result; // 読み込んだテキストを readTxt に入れる
+		writeFilNam = input.name.split( "." )[0];
+		after_file_read(readTxt, writeFilNam);
 	 }
 },false);
 
+function after_file_read(readTxt, writeFilNam){
+	document.entFil.read_txt.value = readTxt;  //テキストエリアに表示
+	let fieChk = 0;
+	pointer = readTxt.indexOf("</gpx>");
+	( pointer !== -1 ) ? fieChk = fieChk: fieChk++;
+	pointer = readTxt.indexOf("<gpx");
+	( pointer !== -1 ) ? fieChk = fieChk: fieChk++;
+	if (fieChk === 0 ){
+		make_Wplist(readTxt); // v20
+		make_Wplist_byYR(readTxt); // v20
+console.log(WpList);
+		mke_KLM();
+		flgErr1 = 0;
+	}else{
+		alert("ファイル1はGPXファイルではありません");
+		flgErr1 = 1;
+	}
+}
+
 
 function get_trkptLLE(entStr, pointer){
-// 文字列entStrのpinterの位置から<trkptを検索しtrkptの経度、緯度、標高を"Lon,Lat,Ele"の文字列で返す
-// 見つからない時pointerは-1、文字列はブランク。<ele>のデータがない時はブランク
+// 文字列entStrのpinterの位置から<trkptを検索しtrkptの経度、緯度、標高、地名を"Lon,Lat,Ele,strName"の文字列で返す
+// 見つからない時pointerは-1、文字列はブランク。<ele>のデータが無い時はブランク
 	pointer = entStr.indexOf("<trkpt",pointer);
 	let strDat, strEle;
-	if (pointer === -1){ 
-		return trkpArr = [pointer, ""]; 
-	}
+	if (pointer === -1){ return trkpArr = [pointer, ""]; }
 	let trkptStr = entStr.substring(pointer, entStr.indexOf("</trkpt>",pointer)+8);
 	let Latpt = trkptStr.indexOf("lat=");
 	let Lonpt = trkptStr.indexOf("lon=");
@@ -99,32 +138,18 @@ function get_trkptLLE(entStr, pointer){
 		strEle = trkptStr.substring(trkptStr.indexOf("<ele>")+5,trkptStr.indexOf("</ele>"));
 		strDat = strLon +","+ strLat +","+ strEle;
 	}else{
-		strDat = strLon +","+ strLat;
+		strDat = strLon +","+ strLat +"," + 0; // v20 カシミール3dエラー対策
 	}
 	return trkpArr = [pointer, strDat];
 }
 
 
 function mke_KLM() {
-  // 設定要件
-	let i;
-	let LinColor = ""; // ラインカラー
-	let BtColor = document.selbttn1.color1;
-	for ( i = 0; i < selbttn1.length; i++){
-		if(BtColor[i].checked){ 
-			LinColor = BtColor[i].value;
-			break;
-		}
-	}
-	let iconSet = ""; // マーカーの設定
-	let BtIcon = document.selbttn2.Icon;
-	for ( i = 0; i < selbttn2.length; i++){
-		if(BtIcon[i].checked){ 
-			iconSet = BtIcon[i].value;
-			break;
-		}
-	}
+ 	if ( readTxt === "" ){ return; }
 	let LinWid = document.getElementById("WoL").value; // ライン幅
+	let LinColor = document.selbttn1.color1.value; // ラインカラー
+	let iconSet = document.selbttn2.Icon.value; // トラック始終マーカー(アイコン)表示
+	let WpIcon = document.selbttn3.Icon2.value; // 地名マーカー有無
 
   // ヘッダとラインスタイルの記述
 	writeTex = '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n';
@@ -132,7 +157,19 @@ function mke_KLM() {
 	writeTex += '  <Style id="L1">\n    <LineStyle>\n      <color>' + LinColor + '</color>\n';
 	writeTex += '      <width>' + LinWid + '</width>\n';
 	writeTex += '    </LineStyle>\n  </Style>\n';
-
+  // ウエイポイント(地名)の記述 v20
+	if (WpList.length != 0 && WpIcon === "on" ){
+		writeTex += '  <Style id="WpIcon">\n    <IconStyle>\n      <Icon>\n';
+		writeTex += '        <href>https://maps.gsi.go.jp/portal/sys/v4/symbols/609.png</href>\n      </Icon>\n';
+		writeTex += '    <scale>1.0</scale>\n    </IconStyle>\n  </Style>\n';
+		for ( let i = 0; i < WpList.length ; i++ ){
+			writeTex += '  <Placemark>\n    <name>' + WpList[ i ][0] + '</name>\n';
+			writeTex += '      <styleUrl>#WpIcon</styleUrl>\n';
+			writeTex += '    <Point>\n      <altitudeMode>relativeToGround</altitudeMode>\n';
+			writeTex += '      <coordinates>' + WpList[ i ][2] + ',' + WpList[ i ][1] + '</coordinates>\n';
+			writeTex += '    </Point>\n   </Placemark>\n';
+		}
+	}
  // トラック数をチェックしトラック名とナンバーの配列を作成
 	pointer = 0;
 	let NofTrk = 0;
@@ -157,7 +194,7 @@ function mke_KLM() {
 	if ( NofTrk === 1){
 		trkFlgArr.push("b");
 	}else{
-		for (i = 0; i < NofTrk; i++ ) {
+		for ( let i = 0; i < NofTrk; i++ ) {
 			trkFlg = "b";
 			if ( i + 1 < NofTrk && trkNamArr[i] === trkNamArr[i+1] ){
 					trkFlg = "s";
@@ -174,18 +211,18 @@ function mke_KLM() {
 		}
 	}
   // トラック名が同じ場合は<number>の値を付加したものをトラック名とする
-	for (i = 0; i < NofTrk; i++ ) {
+	for ( let i = 0; i < NofTrk; i++ ) {
 		if ( trkFlgArr[i] != "b" ){
 			trkNamArr[i] = trkNamArr[i] + NumArr[i];
 		}
 	}
 
- // 1トラック分の文字列を切り出し、その文字列からマーカーとラインのデータ記述を作成
+ // 1トラック分の文字列を切り出し、その文字列からマーカーとラインデータの記述を作成
 	pointer = 0;
-	for (i = 0; i < NofTrk; i++ ) {
+	for (let i = 0; i < NofTrk; i++ ) {
 		pointer = readTxt.indexOf("<trk>", pointer +1);
 		let strTrk = readTxt.substring( pointer, readTxt.indexOf("</trk>",pointer) );
-  // ポイントマーカーの記述
+  // トラック始終マーカー記述
 		if ( iconSet !== "no" ){
 			get_trkptLLE(strTrk, 0);
 			let strIcSp = trkpArr[1];
@@ -207,9 +244,8 @@ function mke_KLM() {
  // ラインの記述
 		writeTex += '  <Placemark>\n    <name>' + trkNamArr[i] + '</name>\n';
 		writeTex += '    <styleUrl>#L1</styleUrl>\n    <LineString>\n      <altitudeMode></altitudeMode>\n      <coordinates>\n';
-		// ライン用緯度経度文字列生成
 		let SubPointer = 0;
-		do {
+		do { // ライン用緯度経度文字列生成
 			get_trkptLLE(strTrk, SubPointer +1 );
 			SubPointer = trkpArr[0];
 			if ( SubPointer !== -1 ){
@@ -227,7 +263,7 @@ function mke_KLM() {
 function saveFile() {
 // ファイル出力
 	if (flgErr1 == 1 ){ alert("有効なGPXファイルが読み込まれていません"); return;}
-	mke_KLM();
+//	mke_KLM();
 	let title = writeFilNam + ".kml"; // 出力ファイル名
 	let linkTag = document.getElementById( "getLocal" );
 	let linkTagAttr =  ["href","download"];
@@ -235,6 +271,50 @@ function saveFile() {
 	let objectURL = window.URL.createObjectURL( stringObject );   
 	linkTag.setAttribute( linkTagAttr[0], objectURL );
 	linkTag.setAttribute( linkTagAttr[1], title ); 
+}
+
+
+// WP付GPX読み込み時のマーカーリスト作成(v20)
+function make_Wplist(entStr){
+	WpList = [], pointer = 0;
+	let nnn = 0;
+	do{
+		nnn++; if (nnn > 50) {break;} // 異常時ループ脱出
+		pointer = entStr.indexOf("<wpt", pointer);
+		if ( pointer != -1 ){
+			let Latpt = entStr.indexOf( "lat=",  pointer);
+			let Lonpt = entStr.indexOf( "lon=", pointer );
+			let LatStr = entStr.substring( Latpt+5, entStr.indexOf('"', Latpt + 5) );
+			let LonStr = entStr.substring( Lonpt+5, entStr.indexOf('"', Lonpt + 5) );
+			let nameStr = entStr.substring( entStr.indexOf( "<name>", pointer  ) + 6, entStr.indexOf( "</name>", pointer  ) );
+			WpList.push( [nameStr, LatStr, LonStr] );
+			pointer = Lonpt;
+		}
+	} while ( pointer != -1 );
+}
+
+// ヤマレコ地名付GPX読み込み時のマーカーリスト作成(v20)
+function make_Wplist_byYR(entStr){
+	if ( WpList.length != 0 ){ return; }
+	WpList = [];	pointer = 0;	let nnn = 0;
+	while ( nnn < 100 ){
+		pointer = entStr.indexOf("<trkpt",pointer);
+		if (pointer === -1){ break; }
+		let trkptStr = entStr.substring(pointer, entStr.indexOf("</trkpt>",pointer)+8);
+		if ( trkptStr.indexOf("<name>") != -1 ){
+			let Latpt = trkptStr.indexOf("lat=");
+			let Lonpt = trkptStr.indexOf("lon=");
+			let strLat = trkptStr.substring( Latpt+5, trkptStr.indexOf('"', Latpt+5) );
+			let strLon = trkptStr.substring( Lonpt+5, trkptStr.indexOf('"', Lonpt+5) );
+			let strName = trkptStr.substring(trkptStr.indexOf("<name>")+6, trkptStr.indexOf("</name>"));
+			strName = strName.split("[")[0]; // 読み仮名カット
+			let dupNameFlg = 0;
+		 	for ( let i = 0; i < WpList.length ; i++ ){ if ( WpList[ i ][0] ===  strName ){ dupNameFlg = 1; } }
+			if ( dupNameFlg === 0 ){ WpList.push( [ strName, parseFloat(strLat), parseFloat(strLon) ] ); }
+			nnn++;
+		}
+		pointer ++;
+	}
 }
 
 
