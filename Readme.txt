@@ -10,7 +10,7 @@
 　このツールはkmlファイルの書式を地理院の要求仕様に合わせてあり、ラインの色、太さ、マーカーの表示指定ができ、変換も早く手軽です。
 　元ファイルは読み取るだけで、何の変更もしません。
 
-　Google Chrome、Firefox、Microsoft Edge で動作を確認してます。Android の Chrome でも使えます。Opera や safari でも動くと思われます。
+　Google Chrome、Firefox、Microsoft Edge、Vivaldi で動作を確認してます。Android の Chrome、 Opera でも使えます。 safari でも動くと思われます。
 
 
 １．使い方
