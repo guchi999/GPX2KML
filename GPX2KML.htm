@@ -9,7 +9,7 @@
   </style>
 </head>
 <body>
-	[GPX→KML変換 V2.0]
+	[GPX→KML変換 V2.1]
 	<br>
 	<b>画面にGPXファイルをドロップするか、ファイル選択ボタンを押して選択してください。</b>
 	<input type="file" multiple id="selfile">
@@ -43,12 +43,27 @@
 		<label><input type="radio" name="Icon" value="no" onchange="mke_KLM()" > 表示しない</label>
 	</form>
 	<form name="selbttn3">
-		<b style="color:#ff3d3d">🞛</b>ウエイポイント(地名)マーカー：
+		<b style="color:#ff3d3d">🞛</b>ウェイポイント(地名)マーカー：
 		<label><input type="radio" name="Icon2" value="on" onchange="mke_KLM()" checked > 表示する</label>
 		<label><input type="radio" name="Icon2" value="off" onchange="mke_KLM()" > 表示しない</label>
 	</form>
 
-	<br>
+	<form name="selbttn4">
+		<b style="color:#ff3d3d">🞛</b>ウェイポイントアイコン：
+		<label><input type="radio" name="Icon3" value="609.png" onchange="mke_KLM()" checked>
+			<img src="https://maps.gsi.go.jp/portal/sys/v4/symbols/609.png"></label>
+		<label><input type="radio" name="Icon3" value="097.png" onchange="mke_KLM()" >
+			<img src="https://maps.gsi.go.jp/portal/sys/v4/symbols/097.png"></label>
+		<label><input type="radio" name="Icon3" value="dot.png" onchange="mke_KLM()" >
+			<img src="https://maps.gsi.go.jp/portal/sys/v4/symbols/dot.png"></label>
+		<label><input type="radio" name="Icon3" value="817.png" onchange="mke_KLM()" >
+			<img src="https://maps.gsi.go.jp/portal/sys/v4/symbols/817.png"></label>
+		<label><input type="radio" name="Icon3" value="088.png" onchange="mke_KLM()" >
+			<img src="https://maps.gsi.go.jp/portal/sys/v4/symbols/088.png"></label>
+		<label><input type="radio" name="Icon3" value="089.png" onchange="mke_KLM()" >
+			<img src="https://maps.gsi.go.jp/portal/sys/v4/symbols/089.png"></label>
+	</form>
+
 	<a id="getLocal" href="#" onClick="saveFile()">
 	<span style="border: 1px solid #000000; background-color: #dcdcdc">変換したKMLファイルを保存</span></a>
 	<br><br>
@@ -62,7 +77,7 @@ var writeTex = ""; // 出力ファイル用文字列
 var pointer = 0; // 検索用ポインタ
 var trkpArr = [0, ""]; // trkptArr = [pointer, "lon,lat,ele"]
 var flgErr1 = 1; // エラーフラグ
-var WpList = []; // ウエイポイント(地名)配列 [ [ name, lat, lon ], ... ]
+var WpList = []; // ウェイポイント(地名)配列 [ [ name, lat, lon ], ... ]
 
 
 //ファイル読み込み（ダイアログでファイルが選択かドロップされた時）
@@ -150,6 +165,7 @@ function mke_KLM() {
 	let LinColor = document.selbttn1.color1.value; // ラインカラー
 	let iconSet = document.selbttn2.Icon.value; // トラック始終マーカー(アイコン)表示
 	let WpIcon = document.selbttn3.Icon2.value; // 地名マーカー有無
+	let WpSmb = document.selbttn4.Icon3.value; // ウェイポイントシンボル V21
 
   // ヘッダとラインスタイルの記述
 	writeTex = '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n';
@@ -157,10 +173,10 @@ function mke_KLM() {
 	writeTex += '  <Style id="L1">\n    <LineStyle>\n      <color>' + LinColor + '</color>\n';
 	writeTex += '      <width>' + LinWid + '</width>\n';
 	writeTex += '    </LineStyle>\n  </Style>\n';
-  // ウエイポイント(地名)の記述 v20
+  // ウェイポイント(地名)の記述 v20
 	if (WpList.length != 0 && WpIcon === "on" ){
 		writeTex += '  <Style id="WpIcon">\n    <IconStyle>\n      <Icon>\n';
-		writeTex += '        <href>https://maps.gsi.go.jp/portal/sys/v4/symbols/609.png</href>\n      </Icon>\n';
+		writeTex += '        <href>https://maps.gsi.go.jp/portal/sys/v4/symbols/' + WpSmb + '</href>\n      </Icon>\n';
 		writeTex += '    <scale>1.0</scale>\n    </IconStyle>\n  </Style>\n';
 		for ( let i = 0; i < WpList.length ; i++ ){
 			writeTex += '  <Placemark>\n    <name>' + WpList[ i ][0] + '</name>\n';
