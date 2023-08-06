@@ -5,13 +5,21 @@
   <meta charset="UTF-8">
   <title>GPX2KML</title>
   <style>
+  
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=yes" />
+  
+ body  { font-size: clamp(16px, 2.9vw, 32px); }
+
+  
+<!-- 
 	body { width: 90%; max-width: 900px; min-width: 480px; margin: 0 auto; }
+-->
   </style>
 </head>
 <body>
-	[GPX→KML変換 V2.1]
+	[GPX→KML変換 V2.2]
 	<br>
-	<b>画面にGPXファイルをドロップするか、ファイル選択ボタンを押して選択してください。</b>
+	<b>画面にGPXファイルをドロップするか、ファイル選択ボタンを押して選択してください。</b><br>
 	<input type="file" multiple id="selfile">
 	<br>
 	<form name="entFil">
@@ -39,13 +47,13 @@
 	<form name="selbttn2">
 		<b style="color:#ff3d3d">🞛</b>トラック端マーカー：
 		<label><input type="radio" name="Icon" value="all" onchange="mke_KLM()"> 全て表示する</label>
-		<label><input type="radio" name="Icon" value="se" onchange="mke_KLM()" > 始点と終点のみ表示</label>
-		<label><input type="radio" name="Icon" value="no" onchange="mke_KLM()" checked> 表示しない</label>
+		<label><input type="radio" name="Icon" value="se" onchange="mke_KLM()"> 始点と終点のみ表示</label>
+		<label><input type="radio" name="Icon" value="no" onchange="mke_KLM()" checked > 表示しない</label>
 	</form>
 	<form name="selbttn3">
 		<b style="color:#ff3d3d">🞛</b>ウェイポイント(地名)マーカー：
-		<label><input type="radio" name="Icon2" value="on" onchange="mke_KLM()"  > 表示する</label>
-		<label><input type="radio" name="Icon2" value="off" onchange="mke_KLM()" checked> 表示しない</label>
+		<label><input type="radio" name="Icon2" value="on" onchange="mke_KLM()" > 表示する</label>
+		<label><input type="radio" name="Icon2" value="off" onchange="mke_KLM()" checked > 表示しない</label>
 	</form>
 
 	<form name="selbttn4">
@@ -188,19 +196,29 @@ function mke_KLM() {
 	}
  // トラック数をチェックしトラック名とナンバーの配列を作成
 	pointer = 0;
-	let NofTrk = 0;
-	let trkName = ""; let NumName = ""
-	let trkNamArr = []; let NumArr =[];
+	let NofTrk = 0, Pointer2 = 0; // V2.3
+	let trkName = "", NumName = ""
+	let trkNamArr = [], NumArr =[];
 	do {
 		pointer = readTxt.indexOf("<trk>", pointer +1);
+		pointer2 = readTxt.indexOf("<trk>", pointer +1); // V2.2
 		if ( pointer !== -1 ) {
 			NofTrk++;
 			pointer = readTxt.indexOf("<name>", pointer);
 			(pointer !== -1) ? trkName = readTxt.substring( pointer +6, readTxt.indexOf("</name>",pointer) ): trkName = "";
-			trkNamArr.push(trkName);
-			pointer = readTxt.indexOf("<number>", pointer);
-			(pointer !== -1) ? NumName = readTxt.substring( pointer +8, readTxt.indexOf("</number>",pointer) ): NumName ="";
-			NumArr.push(NumName);
+			trkNamArr.push(trkName);		
+			let pointerNum = readTxt.indexOf("<number>", pointer); // V2.2
+			if ((pointerNum < pointer2) || (pointer2 == -1)) { // V2.2
+				if (pointerNum !== -1) {
+					NumName = readTxt.substring( pointerNum +8, readTxt.indexOf("</number>",pointerNum));
+					pointer = pointerNum;
+				}else{ 
+					NumName ="";
+				} 
+			}else{ 
+				NumName ="";
+			} 
+			NumArr.push(NumName); NumName ="";
 		}
 	} while ( pointer !== -1 );
 
