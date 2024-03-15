@@ -4,20 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <title>GPX2KML</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" > 
   <style>
-  
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=yes" />
-  
- body  { font-size: clamp(16px, 2.9vw, 32px); }
-
-  
-<!-- 
-	body { width: 90%; max-width: 900px; min-width: 480px; margin: 0 auto; }
--->
   </style>
 </head>
 <body>
-	[GPX→KML変換 V2.2]
+	[GPX→KML変換 V2.21]
 	<br>
 	<b>画面にGPXファイルをドロップするか、ファイル選択ボタンを押して選択してください。</b><br>
 	<input type="file" multiple id="selfile">
@@ -196,7 +188,7 @@ function mke_KLM() {
 	}
  // トラック数をチェックしトラック名とナンバーの配列を作成
 	pointer = 0;
-	let NofTrk = 0, Pointer2 = 0; // V2.3
+	let NofTrk = 0, Pointer2 = 0; // V2.2
 	let trkName = "", NumName = ""
 	let trkNamArr = [], NumArr =[];
 	do {
